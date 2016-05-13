@@ -6,17 +6,12 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.vienan.retrofitdemo.utils.AppUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Cache;
-import okhttp3.CacheControl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -58,12 +53,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public Response intercept(Chain chain) throws IOException {
                 Request request = chain.request();
-                if (!AppUtils.isNetworkReachable(MyApp.getContext())) {
-                    request = request.newBuilder()
-                            .cacheControl(CacheControl.FORCE_CACHE)
-                            .url("https://publicobject.com/helloworld.txt").build();
+               /* if (!AppUtils.isNetworkReachable(MyApp.getContext())) {
+                    *//*request = request.newBuilder()
+                            .cacheControl(CacheControl.FORCE_C ACHE)
+                            .url("https://publicobject.com/helloworld.txt").build();*//*
                     Toast.makeText(MainActivity.this,"暂无网络",Toast.LENGTH_SHORT).show();//子线程安全显示Toast
-                }
+                }else {
+                    Toast.makeText(MainActivity.this,"网络良好",Toast.LENGTH_SHORT).show();
+                }*/
 
                 Response response = chain.proceed(request);
                 /*if (AppUtils.isNetworkReachable(MyApp.getContext())) {
@@ -79,15 +76,15 @@ public class MainActivity extends AppCompatActivity {
                             .header("Cache-Control", "public, only-if-cached, max-stale=" + maxStale)
                             .build();
                 }*/
-                Log.d("body",response.body().string());
+                Log.d("body",response.request().url().toString());
                 return response;
             }
         };
-        okHttpBuilder.cache(new Cache(httpCacheDirectory,10 * 1024 * 1024))
-                                    .addInterceptor(interceptor);
+        okHttpBuilder.cache()
         okHttpBuilder.addInterceptor(interceptor);
         Retrofit retrofit=new Retrofit.Builder()
                 .baseUrl("https://api.github.com/")
+                .client(okHttpBuilder.build())
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .build();
